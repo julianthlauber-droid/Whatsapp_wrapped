@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Wrapped</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#0B0B14;
+    --green:#3ECF8E;
+    --coral:#FF5D5D;
+    --violet:#8B5CF6;
+    --yellow:#FFC94D;
+    --paper:#F7F4EE;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:#050507;
+    color:var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Space Grotesk',sans-serif;}
+
+  /* ---------- UPLOAD SCREEN ---------- */
+  #upload-screen{
+    width:100%;
+    max-width:480px;
+    padding:32px 24px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--green);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  h1.title{
+    font-size:clamp(32px,8vw,44px);
+    line-height:1.05;
+    font-weight:700;
+    margin-bottom:16px;
+  }
+  .lede{
+    color:#B9B7C6;
+    font-size:15px;
+    line-height:1.55;
+    margin-bottom:28px;
+  }
+  .steps{
+    background:#121220;
+    border:1px solid #232334;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:24px;
+  }
+  .steps h3{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--yellow);
+    margin-bottom:12px;
+  }
+  .steps ol{padding-left:18px;color:#CFCEDA;font-size:14px;line-height:1.9;}
+
+  .dropzone{
+    border:2px dashed #33334a;
+    border-radius:16px;
+    padding:32px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:.2s;
+    background:#0F0F1A;
+  }
+  .dropzone:hover{border-color:var(--green);background:#12181a;}
+  .dropzone strong{display:block;font-size:16px;margin-bottom:6px;}
+  .dropzone span{font-size:13px;color:#9C9AAE;}
+  .error-box{
+    margin-top:16px;
+    background:#2a1414;
+    border:1px solid var(--coral);
+    color:#ffb3b3;
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:13px;
+  }
+
+  /* ---------- NAME PICKER ---------- */
+  #picker-screen{width:100%;max-width:420px;padding:24px;display:none;}
+  .picker-row{display:flex;gap:10px;margin-bottom:14px;}
+  select{
+    flex:1;
+    background:#121220;
+    color:var(--paper);
+    border:1px solid #2a2a3d;
+    border-radius:10px;
+    padding:12px;
+    font-family:'Inter';
+    font-size:14px;
+  }
+  .btn{
+    width:100%;
+    background:var(--green);
+    color:#06140d;
+    border:none;
+    border-radius:12px;
+    padding:15px;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    font-family:'Space Grotesk';
+    transition:.15s;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn.secondary{
+    background:transparent;
+    border:1px solid #333349;
+    color:var(--paper);
+    margin-top:10px;
+  }
+
+  /* ---------- STORY VIEWER ---------- */
+  #story-screen{
+    display:none;
+    width:100%;
+    height:100%;
+    position:fixed;
+    inset:0;
+    align-items:center;
+    justify-content:center;
+    background:#050507;
+  }
+  .phone{
+    position:relative;
+    width:min(420px,100vw);
+    height:min(760px,100dvh);
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);
+  }
+  .card{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    padding:70px 30px 100px;
+    overflow:hidden;
+  }
+  .card.active{display:flex;}
+  .card::before{
+    content:'';
+    position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.16) 1.5px, transparent 1.5px);
+    background-size:22px 22px;
+    pointer-events:none;
+  }
+  .card-icon{
+    position:absolute;
+    top:-14px;right:-14px;
+    font-size:120px;
+    opacity:.18;
+    transform:rotate(-10deg);
+    pointer-events:none;
+    line-height:1;
+  }
+  .grad-0{background:linear-gradient(135deg,#FF2E92,#7B2FF7);}
+  .grad-1{background:linear-gradient(135deg,#7B61FF,#4F46E5);}
+  .grad-2{background:linear-gradient(135deg,#FF7A45,#FF3D6E);}
+  .grad-3{background:linear-gradient(135deg,#FFC94D,#FF8A3D);}
+  .grad-4{background:linear-gradient(135deg,#3ECF8E,#12B3A8);}
+  .grad-5{background:linear-gradient(135deg,#22C1E0,#3B82F6);}
+  .grad-6{background:linear-gradient(135deg,#FF4FA0,#FFB84D);}
+
+  .dots{
+    position:absolute;
+    top:14px;left:14px;right:14px;
+    display:flex;
+    gap:5px;
+    z-index:5;
+  }
+  .dot{flex:1;height:3px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;}
+  .dot i{display:block;height:100%;width:0%;background:#fff;}
+  .dot.done i{width:100%;}
+
+  .tapzone{position:absolute;top:0;bottom:0;width:50%;z-index:4;}
+  .tapzone.left{left:0;}
+  .tapzone.right{right:0;}
+
+  .card .eyebrow-card{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    opacity:.85;font-weight:600;margin-bottom:14px;
+    text-shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+  .card .big{
+    font-size:clamp(46px,15vw,72px);
+    font-weight:700;
+    line-height:1;
+    margin-bottom:14px;
+    text-shadow:0 4px 20px rgba(0,0,0,.3);
+  }
+  .card .headline{
+    font-size:clamp(22px,7vw,30px);
+    font-weight:700;
+    line-height:1.15;
+    margin-bottom:14px;
+    text-shadow:0 4px 20px rgba(0,0,0,.3);
+  }
+  .card .sub{font-size:15px;line-height:1.5;opacity:.92;max-width:320px;text-shadow:0 2px 12px rgba(0,0,0,.25);}
+  .card .thread{
+    position:absolute;
+    left:24px;top:0;bottom:0;
+    width:1px;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,.35) 0 6px,transparent 6px 12px);
+  }
+
+  .meter{width:100%;max-width:320px;margin-top:18px;}
+  .meter-row{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;}
+  .meter-bar{height:14px;border-radius:8px;background:rgba(255,255,255,.18);overflow:hidden;display:flex;}
+  .meter-fill-a{height:100%;background:#fff;}
+  .meter-fill-b{height:100%;background:rgba(255,255,255,.35);}
+
+  .emoji-row{display:flex;gap:14px;margin-top:16px;font-size:34px;}
+
+  .card-footer{
+    position:absolute;
+    bottom:26px;left:30px;right:30px;
+    display:flex;
+    gap:10px;
+    z-index:6;
+  }
+  .icon-btn{
+    background:rgba(0,0,0,.35);
+    border:1px solid rgba(255,255,255,.25);
+    color:#fff;
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Inter';
+  }
+  .icon-btn:hover{background:rgba(0,0,0,.55);}
+
+  .watermark{
+    position:absolute;bottom:10px;right:16px;
+    font-size:11px;opacity:.5;letter-spacing:.05em;
+  }
+
+  .share-wrap{position:relative;}
+  .share-menu{
+    display:none;
+    flex-direction:column;
+    position:absolute;
+    bottom:calc(100% + 8px);
+    left:0;
+    min-width:200px;
+    background:#16161f;
+    border:1px solid #2c2c3d;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,.5);
+  }
+  .share-menu.open{display:flex;}
+  .share-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    background:transparent;
+    border:none;
+    color:#fff;
+    padding:12px 14px;
+    font-size:14px;
+    font-family:'Inter';
+    text-align:left;
+    cursor:pointer;
+  }
+  .share-item:hover{background:#232333;}
+  .share-item + .share-item{border-top:1px solid #232333;}
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translate(-50%,20px);
+    background:#16161f;
+    border:1px solid #2c2c3d;
+    color:#fff;
+    padding:12px 18px;
+    border-radius:10px;
+    font-size:13px;
+    max-width:80vw;
+    text-align:center;
+    opacity:0;
+    pointer-events:none;
+    transition:.25s;
+    z-index:50;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:480px){
+    .phone{width:100vw;height:100dvh;}
+  }
+
+  /* ---------- DOPAMIN-HOOK HINTERGRUND ---------- */
+  .hook-bg{
+    position:fixed;inset:0;z-index:0;overflow:hidden;
+    background:linear-gradient(135deg,#FF2E92,#B23BFF 45%,#FF7A45);
+    background-size:220% 220%;
+    animation:gradientShift 14s ease infinite;
+  }
+  @keyframes gradientShift{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+  }
+  .hook-emoji{
+    position:absolute;
+    font-size:30px;
+    opacity:.9;
+    animation:floaty 9s ease-in-out infinite;
+    filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));
+  }
+  @keyframes floaty{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-24px) rotate(10deg);}
+  }
+
+  #upload-screen, #picker-screen{position:relative;z-index:1;}
+
+  .glass-card{
+    background:rgba(8,8,16,.55);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:20px;
+    padding:22px;
+  }
+
+  .hero-text{text-shadow:0 4px 20px rgba(0,0,0,.35);}
+
+  .step-grid{display:flex;flex-direction:column;gap:14px;}
+  .step-item{display:flex;align-items:center;gap:12px;font-size:14px;color:#EDEBF5;line-height:1.4;}
+  .step-num{
+    flex-shrink:0;width:28px;height:28px;border-radius:50%;
+    background:var(--green);color:#06140d;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+  }
+
+  .feedback-btn{
+    position:fixed;bottom:16px;right:16px;z-index:9999;
+    background:#16161f;color:#fff;border:1px solid #2c2c3d;
+    padding:10px 16px;border-radius:999px;font-size:13px;font-weight:600;
+    text-decoration:none;font-family:'Inter';box-shadow:0 8px 20px rgba(0,0,0,.4);
+  }
+</style>
+</head>
+<body>
+
+<!-- Dopamin-Hook Hintergrund: animierter Farbverlauf + fliegende Emojis -->
+<div class="hook-bg" aria-hidden="true">
+  <span class="hook-emoji" style="top:8%;left:10%;animation-duration:8s;">💬</span>
+  <span class="hook-emoji" style="top:18%;left:78%;animation-duration:10s;animation-delay:1s;">🔥</span>
+  <span class="hook-emoji" style="top:62%;left:6%;animation-duration:11s;animation-delay:2s;">😂</span>
+  <span class="hook-emoji" style="top:72%;left:85%;animation-duration:9s;animation-delay:.5s;">✨</span>
+  <span class="hook-emoji" style="top:38%;left:3%;animation-duration:12s;animation-delay:1.5s;">📱</span>
+  <span class="hook-emoji" style="top:4%;left:58%;animation-duration:10s;animation-delay:2.5s;">👀</span>
+  <span class="hook-emoji" style="top:85%;left:42%;animation-duration:8.5s;animation-delay:1s;">💚</span>
+  <span class="hook-emoji" style="top:48%;left:88%;animation-duration:9.5s;animation-delay:2s;">📸</span>
+</div>
+
+<!-- Feedback-Button: WICHTIG, Julian muss die E-Mail unten durch seine eigene ersetzen! -->
+<a class="feedback-btn" href="mailto:julianthlauber@gmail.com?subject=Feedback%20zu%20Chat%20Wrapped&body=Hey!%20Kurzes%20Feedback%3A%0D%0A-%20">💬 Feedback</a>
+
+<!-- ============ UPLOAD SCREEN ============ -->
+<div id="upload-screen">
+  <div class="eyebrow hero-text">Chat Wrapped · MVP</div>
+  <h1 class="title hero-text">Wie viel habt ihr wirklich geschrieben?</h1>
+  <p class="lede hero-text">Ladet euren WhatsApp-Chat hoch. Alles bleibt in deinem Browser — nichts wird irgendwohin gesendet. In 5 Sekunden bekommt ihr eure Stats als teilbare Story-Karten.</p>
+
+  <div class="glass-card">
+    <div class="steps" style="background:transparent;border:none;padding:0;margin-bottom:22px;">
+      <h3>So geht's – in 4 Schritten</h3>
+      <div class="step-grid">
+        <div class="step-item"><span class="step-num">1</span><span>WhatsApp öffnen und den gewünschten Chat antippen</span></div>
+        <div class="step-item"><span class="step-num">2</span><span>Oben auf den Namen der Person tippen</span></div>
+        <div class="step-item"><span class="step-num">3</span><span>Ganz unten "Chat exportieren" antippen → <strong>ohne Medien</strong> wählen</span></div>
+        <div class="step-item"><span class="step-num">4</span><span>Die Datei, die jetzt angeboten wird, hier unten hochladen</span></div>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone" style="position:relative;">
+      <strong>👉 Hier tippen, um deine Datei auszuwählen</strong>
+      <span>(am Computer geht auch: Datei hierher ziehen)</span>
+      <input type="file" id="fileInput" accept=".txt" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+    </div>
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+
+    <button class="btn secondary" id="togglePaste" style="margin-top:16px;">Geht nicht? Text stattdessen einfügen</button>
+    <div id="pasteBox" style="display:none;margin-top:12px;">
+      <p style="font-size:13px;color:#9C9AAE;margin-bottom:10px;line-height:1.5;">
+        Öffne die exportierte .txt-Datei (z.B. in der Dateien-App oder Notizen), markiere alles (antippen & halten → "Alles auswählen" → "Kopieren") und füg es hier ein.
+      </p>
+      <textarea id="pasteArea" placeholder="Chat-Text hier einfügen…" style="width:100%;min-height:160px;background:#121220;color:var(--paper);border:1px solid #2a2a3d;border-radius:10px;padding:12px;font-family:'Inter';font-size:13px;resize:vertical;"></textarea>
+      <button class="btn" id="submitPaste" style="margin-top:10px;">Chat auswerten →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NAME PICKER ============ -->
+<div id="picker-screen">
+  <div class="glass-card">
+    <div class="eyebrow hero-text">Fast geschafft</div>
+    <h1 class="title hero-text" style="font-size:26px;">Wer sind die zwei Personen?</h1>
+    <p class="lede hero-text">Wir haben mehrere Namen im Chat gefunden. Wählt die zwei aus, die verglichen werden sollen.</p>
+    <div class="picker-row">
+      <select id="selA"></select>
+      <select id="selB"></select>
+    </div>
+    <button class="btn" id="confirmNames">Story erstellen →</button>
+  </div>
+</div>
+
+<!-- ============ STORY VIEWER ============ -->
+<div id="story-screen">
+  <div class="phone" id="phone">
+    <div class="dots" id="dots"></div>
+    <div class="tapzone left" id="tapLeft"></div>
+    <div class="tapzone right" id="tapRight"></div>
+    <div id="cardsContainer"></div>
+    <div class="card-footer">
+      <div class="share-wrap">
+        <button class="icon-btn" id="shareBtn">⬇ Als Bild speichern</button>
+        <div class="share-menu" id="shareMenu">
+          <button class="share-item" data-target="instagram">📸 <span>Instagram Story</span></button>
+          <button class="share-item" data-target="whatsapp">💬 <span>WhatsApp Status</span></button>
+          <button class="share-item" data-target="save">⬇ <span>Bild speichern</span></button>
+        </div>
+      </div>
+      <button class="icon-btn" id="restartBtn">↺ Neuer Chat</button>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   1) PARSER
+=================================================================== */
+let lastRawSample = []; // for diagnostics shown in the UI when parsing fails
+
+function parseWhatsApp(text){
+  const lines = text.split(/\r?\n/);
+  // Covers Android/iOS/Desktop variants, hyphen "-", en dash "–", em dash "—",
+  // 24h "14:32" and 12h "2:32 PM" / "2:32:10 pm", with or without brackets.
+  const timePart = '(\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\s?[AaPp]\\.?[Mm]\\.?)?)';
+  const datePart = '(\\d{1,2}[.\\/-]\\d{1,2}[.\\/-]\\d{2,4})';
+  const reBracket = new RegExp(`^\\[${datePart},?\\s${timePart}\\]\\s([^:]{1,40}):\\s(.*)$`);
+  const reDash    = new RegExp(`^${datePart},?\\s${timePart}\\s[-–—]\\s([^:]{1,40}):\\s(.*)$`);
+
+  const messages = [];
+  let current = null;
+  lastRawSample = [];
+
+  for(const raw of lines){
+    // strip invisible marks WhatsApp inserts (LRM, RLM, narrow no-break space, BOM)
+    const line = raw.replace(/[\u200e\u200f\u202f\ufeff]/g,'').trim();
+    if(!line) continue;
+    if(lastRawSample.length < 6) lastRawSample.push(line);
+
+    let m = line.match(reBracket) || line.match(reDash);
+    if(m){
+      const [, dateStr, timeStr, sender, msg] = m;
+      const dt = parseDate(dateStr, timeStr);
+      current = {date: dt, sender: sender.trim(), text: msg};
+      messages.push(current);
+    } else if(current){
+      current.text += ' ' + line;
+    }
+  }
+  return messages.filter(m => !/(Nachrichten und Anrufe sind Ende-zu-Ende|Medien ausgeschlossen|hat den Gruppennamen|hat das Gruppenbild|<Medien ausgeschlossen>|erstellt die Gruppe|hat dich hinzugefügt|Sicherheitsnummer)/i.test(m.text));
+}
+
+function parseDate(dateStr, timeStr){
+  const sep = dateStr.includes('.') ? '.' : (dateStr.includes('/') ? '/' : '-');
+  let [p1,p2,y] = dateStr.split(sep).map(Number);
+  if(y < 100) y += 2000;
+  // Heuristic: if the first number can't be a month (>12), it's DD.MM; else assume DD.MM (EU default) too,
+  // since the target audience is German-locale WhatsApp exports.
+  let d = p1, mo = p2;
+
+  let h = 0, mi = 0;
+  const ampm = timeStr.match(/[AaPp][Mm]/);
+  const timeNums = timeStr.replace(/[^0-9:]/g,'').split(':').map(Number);
+  h = timeNums[0]; mi = timeNums[1];
+  if(ampm){
+    const isPM = ampm[0].toLowerCase()==='pm';
+    if(isPM && h < 12) h += 12;
+    if(!isPM && h === 12) h = 0;
+  }
+  return new Date(y, mo-1, d, h, mi);
+}
+
+/* ===================================================================
+   2) STATS ENGINE
+=================================================================== */
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}]/gu;
+const STOPWORDS = new Set(['der','die','das','und','ist','ich','du','er','sie','es','wir','ihr','ein','eine','einen','war','habe','hast','hat','haben','nicht','auch','aber','doch','noch','so','ja','nein','mal','für','mit','von','zu','im','in','auf','am','an','ist','bin','bist','the','a','an','is','was','were','and','or','you','i','to','of','in','on','it','for','my','me','so','ok','okay','lol','haha']);
+
+function buildStats(messages, nameA, nameB){
+  const byA = messages.filter(m=>m.sender===nameA);
+  const byB = messages.filter(m=>m.sender===nameB);
+  const total = byA.length + byB.length;
+
+  const wordsA = byA.reduce((s,m)=>s+m.text.split(/\s+/).filter(Boolean).length,0);
+  const wordsB = byB.reduce((s,m)=>s+m.text.split(/\s+/).filter(Boolean).length,0);
+
+  function topEmojis(msgs){
+    const counts = {};
+    msgs.forEach(m=>{
+      const found = m.text.match(EMOJI_RE);
+      if(found) found.forEach(e=> counts[e] = (counts[e]||0)+1);
+    });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  }
+  const emojiA = topEmojis(byA);
+  const emojiB = topEmojis(byB);
+
+  // response times: time between a message and the reply from the OTHER person
+  function avgResponse(fromMsgs, toName){
+    const diffs = [];
+    for(let i=1;i<messages.length;i++){
+      if(messages[i].sender===toName && messages[i-1].sender!==toName){
+        const gap = (messages[i].date - messages[i-1].date)/60000; // minutes
+        if(gap>=0 && gap < 60*12) diffs.push(gap); // ignore >12h gaps
+      }
+    }
+    if(!diffs.length) return null;
+    return diffs.reduce((a,b)=>a+b,0)/diffs.length;
+  }
+  const respA = avgResponse(byB, nameA); // how fast A responds to B
+  const respB = avgResponse(byA, nameB);
+
+  // most active hour / weekday
+  const hourCounts = new Array(24).fill(0);
+  const dayCounts = new Array(7).fill(0);
+  messages.forEach(m=>{ hourCounts[m.date.getHours()]++; dayCounts[m.date.getDay()]++; });
+  const topHour = hourCounts.indexOf(Math.max(...hourCounts));
+  const dayNames = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const topDay = dayNames[dayCounts.indexOf(Math.max(...dayCounts))];
+
+  // streak: consecutive calendar days with >=1 message
+  const dateSet = new Set(messages.map(m=> m.date.toDateString()));
+  const sortedDates = [...dateSet].map(d=>new Date(d)).sort((a,b)=>a-b);
+  let longest=1, current=1;
+  for(let i=1;i<sortedDates.length;i++){
+    const diffDays = Math.round((sortedDates[i]-sortedDates[i-1])/86400000);
+    if(diffDays===1){ current++; longest=Math.max(longest,current); } else current=1;
+  }
+
+  // top word
+  const wordCounts = {};
+  messages.forEach(m=>{
+    m.text.toLowerCase().replace(EMOJI_RE,'').split(/[^a-zäöüß]+/i).forEach(w=>{
+      if(w.length>2 && !STOPWORDS.has(w)) wordCounts[w]=(wordCounts[w]||0)+1;
+    });
+  });
+  const topWordEntry = Object.entries(wordCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  const firstDate = messages[0]?.date;
+  const lastDate = messages[messages.length-1]?.date;
+  const daysTogether = firstDate && lastDate ? Math.max(1, Math.round((lastDate-firstDate)/86400000)) : 0;
+
+  return {
+    nameA, nameB, total,
+    countA: byA.length, countB: byB.length,
+    wordsA, wordsB,
+    emojiA, emojiB,
+    respA, respB,
+    topHour, topDay,
+    longestStreak: longest,
+    topWord: topWordEntry ? topWordEntry[0] : null,
+    firstDate, lastDate, daysTogether
+  };
+}
+
+function fmtMinutes(min){
+  if(min==null) return '–';
+  if(min<1) return '<1 Min';
+  if(min<60) return Math.round(min)+' Min';
+  const h = Math.floor(min/60), m = Math.round(min%60);
+  return h+' Std' + (m? ' '+m+' Min':'');
+}
+
+/* ===================================================================
+   3) CARD BUILDER
+=================================================================== */
+function buildCards(s){
+  const pctA = Math.round((s.countA/s.total)*100);
+  const pctB = 100-pctA;
+  const totalWords = s.wordsA+s.wordsB;
+  const books = (totalWords/90000).toFixed(1);
+  const fasterName = (s.respA!=null && s.respB!=null) ? (s.respA<s.respB? s.nameA : s.nameB) : null;
+
+  const cards = [];
+
+  cards.push({icon:'👀', body:`
+    <div class="eyebrow-card">Euer Chat, entschlüsselt</div>
+    <div class="headline">${s.nameA} &amp; ${s.nameB}</div>
+    <div class="sub">${s.total.toLocaleString('de-DE')} Nachrichten seit ${s.firstDate.toLocaleDateString('de-DE')}. Los geht's →</div>
+  `});
+
+  cards.push({icon:'💬', body:`
+    <div class="eyebrow-card">Insgesamt</div>
+    <div class="big">${s.total.toLocaleString('de-DE')}</div>
+    <div class="sub">Nachrichten wurden zwischen euch geschrieben. Das sind im Schnitt ${(s.total/Math.max(1,s.daysTogether)).toFixed(1)} pro Tag.</div>
+  `});
+
+  cards.push({icon:'🏆', body:`
+    <div class="eyebrow-card">Wer schreibt mehr?</div>
+    <div class="headline">${pctA>=pctB? s.nameA : s.nameB} führt mit ${Math.max(pctA,pctB)}%</div>
+    <div class="meter">
+      <div class="meter-row"><span>${s.nameA} · ${s.countA}</span><span>${s.nameB} · ${s.countB}</span></div>
+      <div class="meter-bar"><div class="meter-fill-a" style="width:${pctA}%"></div><div class="meter-fill-b" style="width:${pctB}%"></div></div>
+    </div>
+  `});
+
+  cards.push({icon:'📚', body:`
+    <div class="eyebrow-card">Wortmenge</div>
+    <div class="big">${books}</div>
+    <div class="sub">Bücher hättet ihr mit euren ${totalWords.toLocaleString('de-DE')} Wörtern schreiben können (Ø 90.000 Wörter/Buch).</div>
+  `});
+
+  cards.push({icon:'😎', body:`
+    <div class="eyebrow-card">Emoji-Kampf</div>
+    <div class="headline">${(s.emojiA[0]?.[0]||'🙂')} vs ${(s.emojiB[0]?.[0]||'🙂')}</div>
+    <div class="emoji-row">${s.emojiA.slice(0,5).map(e=>e[0]).join(' ')||'–'}</div>
+    <div class="sub" style="margin-top:14px;">${s.nameA}'s Favorit ↑</div>
+    <div class="emoji-row">${s.emojiB.slice(0,5).map(e=>e[0]).join(' ')||'–'}</div>
+    <div class="sub">${s.nameB}'s Favorit ↑</div>
+  `});
+
+  if(fasterName){
+    cards.push({icon:'⚡', body:`
+      <div class="eyebrow-card">Antwortzeit</div>
+      <div class="headline">${fasterName} antwortet schneller</div>
+      <div class="sub">${s.nameA}: Ø ${fmtMinutes(s.respA)} &nbsp;·&nbsp; ${s.nameB}: Ø ${fmtMinutes(s.respB)}</div>
+    `});
+  }
+
+  cards.push({icon:'🌙', body:`
+    <div class="eyebrow-card">Eure Prime Time</div>
+    <div class="big">${String(s.topHour).padStart(2,'0')}:00</div>
+    <div class="sub">ist eure aktivste Uhrzeit. Und ${s.topDay} euer aktivster Wochentag.</div>
+  `});
+
+  cards.push({icon:'🔥', body:`
+    <div class="eyebrow-card">Streak</div>
+    <div class="big">${s.longestStreak}</div>
+    <div class="sub">Tage in Folge habt ihr mindestens einmal geschrieben — eure längste Serie.${s.topWord? ' Lieblingswort: "'+s.topWord+'".':''}</div>
+  `});
+
+  cards.push({icon:'🎉', body:`
+    <div class="eyebrow-card">Das war's</div>
+    <div class="headline">${s.daysTogether.toLocaleString('de-DE')} Tage Freundschaft 💬</div>
+    <div class="sub">Speichert die Karten und postet sie in eure Story.</div>
+  `});
+
+  cards.forEach((c,i)=> c.gradClass = 'grad-'+(i % 7));
+  return cards;
+}
+
+/* ===================================================================
+   4) UI WIRING
+=================================================================== */
+const uploadScreen = document.getElementById('upload-screen');
+const pickerScreen = document.getElementById('picker-screen');
+const storyScreen = document.getElementById('story-screen');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const errorBox = document.getElementById('errorBox');
+let parsedMessages = [];
+
+dropzone.addEventListener('dragover', e=>{e.preventDefault(); dropzone.style.borderColor='var(--green)';});
+dropzone.addEventListener('dragleave', ()=> dropzone.style.borderColor='#33334a');
+dropzone.addEventListener('drop', e=>{
+  e.preventDefault();
+  if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{
+  if(e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file){
+  errorBox.style.display='none';
+  const reader = new FileReader();
+  reader.onload = e=> processRawText(e.target.result);
+  reader.readAsText(file);
+}
+
+function processRawText(text){
+  const msgs = parseWhatsApp(text);
+  if(msgs.length < 10){
+    const sample = lastRawSample.slice(0,4).map(l=>'· '+l).join('<br>');
+    errorBox.innerHTML = 'Konnte das Format nicht erkennen (nur '+msgs.length+' Nachrichten erkannt).<br><br><strong>So sehen die ersten Zeilen aus:</strong><br>'+ (sample || '(kein Text erkannt)') +'<br><br>Schick mir diese Zeilen im Chat, dann passe ich den Parser an.';
+    errorBox.style.display='block';
+    return;
+  }
+  parsedMessages = msgs;
+  proceedAfterParse();
+}
+
+document.getElementById('togglePaste').addEventListener('click', ()=>{
+  const box = document.getElementById('pasteBox');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+});
+
+document.getElementById('submitPaste').addEventListener('click', ()=>{
+  errorBox.style.display='none';
+  const text = document.getElementById('pasteArea').value;
+  if(!text.trim()){
+    errorBox.textContent = 'Feld ist leer – bitte erst den Chat-Text einfügen.';
+    errorBox.style.display='block';
+    return;
+  }
+  processRawText(text);
+});
+
+function proceedAfterParse(){
+  const counts = {};
+  parsedMessages.forEach(m=> counts[m.sender]=(counts[m.sender]||0)+1);
+  const senders = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+
+  if(senders.length === 2){
+    startStory(senders[0], senders[1]);
+  } else {
+    uploadScreen.style.display='none';
+    pickerScreen.style.display='block';
+    const selA = document.getElementById('selA');
+    const selB = document.getElementById('selB');
+    selA.innerHTML = senders.map(n=>`<option value="${n}">${n}</option>`).join('');
+    selB.innerHTML = senders.map(n=>`<option value="${n}">${n}</option>`).join('');
+    if(senders[1]) selB.value = senders[1];
+  }
+}
+
+document.getElementById('confirmNames').addEventListener('click', ()=>{
+  const a = document.getElementById('selA').value;
+  const b = document.getElementById('selB').value;
+  if(a===b){ alert('Bitte zwei unterschiedliche Personen wählen.'); return; }
+  startStory(a,b);
+});
+
+let cards = [], activeIndex = 0;
+const SLIDE_DURATION = 6000; // ms pro Karte, bevor automatisch weitergeblättert wird
+let autoTimer = null;
+
+function clearAutoTimer(){
+  if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
+}
+
+function startAutoAdvance(){
+  clearAutoTimer();
+  const bar = document.querySelector(`#dot-${activeIndex} i`);
+  if(!bar) return;
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth; // reflow erzwingen, damit die Transition sauber neu startet
+  bar.style.transition = `width ${SLIDE_DURATION}ms linear`;
+  bar.style.width = '100%';
+  autoTimer = setTimeout(()=>{
+    if(activeIndex < cards.length-1){
+      activeIndex++;
+      updateActive();
+      startAutoAdvance();
+    } else {
+      clearAutoTimer(); // letzte Karte: stehen bleiben
+    }
+  }, SLIDE_DURATION);
+}
+
+function pauseAutoAdvance(){
+  clearAutoTimer();
+  const bar = document.querySelector(`#dot-${activeIndex} i`);
+  if(bar){
+    const frozenWidth = getComputedStyle(bar).width;
+    bar.style.transition = 'none';
+    bar.style.width = frozenWidth;
+  }
+}
+
+function startStory(nameA, nameB){
+  uploadScreen.style.display='none';
+  pickerScreen.style.display='none';
+  storyScreen.style.display='flex';
+
+  const stats = buildStats(parsedMessages, nameA, nameB);
+  cards = buildCards(stats);
+  activeIndex = 0;
+  renderCards();
+  startAutoAdvance();
+}
+
+function renderCards(){
+  const dotsEl = document.getElementById('dots');
+  const container = document.getElementById('cardsContainer');
+  dotsEl.innerHTML = cards.map((_,i)=>`<div class="dot ${i<activeIndex?'done':''}" id="dot-${i}"><i></i></div>`).join('');
+  container.innerHTML = cards.map((c,i)=>`
+    <div class="card ${c.gradClass} ${i===activeIndex?'active':''}" id="card-${i}">
+      <div class="thread"></div>
+      <div class="card-icon">${c.icon||''}</div>
+      ${c.body}
+      <div class="watermark">made with Chat Wrapped</div>
+    </div>
+  `).join('');
+  updateActive();
+}
+
+function updateActive(){
+  cards.forEach((_,i)=>{
+    document.getElementById(`card-${i}`).classList.toggle('active', i===activeIndex);
+    const dot = document.getElementById(`dot-${i}`);
+    dot.classList.toggle('done', i<activeIndex);
+    const bar = dot.querySelector('i');
+    if(i < activeIndex){ bar.style.transition='none'; bar.style.width='100%'; }
+    else if(i > activeIndex){ bar.style.transition='none'; bar.style.width='0%'; }
+    // die aktive Bar (i === activeIndex) wird von startAutoAdvance() animiert
+  });
+}
+
+document.getElementById('tapRight').addEventListener('click', ()=>{
+  if(activeIndex < cards.length-1){ activeIndex++; updateActive(); startAutoAdvance(); }
+});
+document.getElementById('tapLeft').addEventListener('click', ()=>{
+  if(activeIndex > 0){ activeIndex--; updateActive(); }
+  startAutoAdvance();
+});
+document.addEventListener('keydown', e=>{
+  if(storyScreen.style.display==='flex'){
+    if(e.key==='ArrowRight') document.getElementById('tapRight').click();
+    if(e.key==='ArrowLeft') document.getElementById('tapLeft').click();
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  clearAutoTimer();
+  storyScreen.style.display='none';
+  uploadScreen.style.display='block';
+  fileInput.value='';
+});
+
+/* ---------- SHARE MENU ---------- */
+const shareBtn = document.getElementById('shareBtn');
+const shareMenu = document.getElementById('shareMenu');
+const toast = document.getElementById('toast');
+
+const SHARE_MENU_MAIN = `
+  <button class="share-item" data-target="instagram">📸 <span>Instagram Story</span></button>
+  <button class="share-item" data-target="whatsapp">💬 <span>WhatsApp Status</span></button>
+  <button class="share-item" data-target="save">⬇ <span>Bild speichern</span></button>
+`;
+
+function renderShareMenuMain(){
+  shareMenu.innerHTML = SHARE_MENU_MAIN;
+  shareMenu.querySelectorAll('.share-item').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const target = btn.dataset.target;
+      if(target === 'save'){
+        closeShareMenu();
+        handleShare('save', 'single');
+      } else {
+        renderShareScopeChoice(target);
+      }
+    });
+  });
+}
+
+function renderShareScopeChoice(target){
+  shareMenu.innerHTML = `
+    <button class="share-item" data-scope="single">1️⃣ <span>Nur diese Karte</span></button>
+    <button class="share-item" data-scope="all">🎞️ <span>Alle ${cards.length} Karten</span></button>
+    <button class="share-item" data-scope="back">← <span>Zurück</span></button>
+  `;
+  shareMenu.querySelectorAll('.share-item').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const scope = btn.dataset.scope;
+      if(scope === 'back'){ renderShareMenuMain(); return; }
+      closeShareMenu();
+      handleShare(target, scope);
+    });
+  });
+}
+
+function openShareMenu(){
+  renderShareMenuMain();
+  pauseAutoAdvance();
+  shareMenu.classList.add('open');
+}
+function closeShareMenu(){
+  shareMenu.classList.remove('open');
+  startAutoAdvance();
+}
+
+shareBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if(shareMenu.classList.contains('open')) closeShareMenu();
+  else openShareMenu();
+});
+document.addEventListener('click', (e)=>{
+  if(shareMenu.classList.contains('open') && !shareMenu.contains(e.target) && e.target!==shareBtn){
+    closeShareMenu();
+  }
+});
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 3800);
+}
+
+function downloadBlob(blob, fileName){
+  const link = document.createElement('a');
+  link.download = fileName;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  setTimeout(()=> URL.revokeObjectURL(link.href), 4000);
+}
+
+// Erzeugt für JEDE Karte ein Bild (macht kurz jede Karte aktiv, um sie zu fotografieren)
+async function captureAllCards(){
+  const prevActive = activeIndex;
+  const files = [];
+  for(let i=0;i<cards.length;i++){
+    document.querySelectorAll('.card').forEach((c,idx)=> c.classList.toggle('active', idx===i));
+    await new Promise(r=> setTimeout(r, 60));
+    const el = document.getElementById(`card-${i}`);
+    const canvas = await html2canvas(el, {backgroundColor:null, scale:2, useCORS:true, allowTaint:false});
+    const blob = await new Promise(res=> canvas.toBlob(res, 'image/png'));
+    files.push(new File([blob], `chat-wrapped-${i+1}.png`, {type:'image/png'}));
+  }
+  document.querySelectorAll('.card').forEach((c,idx)=> c.classList.toggle('active', idx===prevActive));
+  return files;
+}
+
+async function shareFiles(files, target){
+  if(target === 'save'){
+    files.forEach(f=> downloadBlob(f, f.name));
+    return;
+  }
+  const canNativeShare = navigator.canShare && navigator.canShare({files});
+  if(canNativeShare){
+    try{
+      await navigator.share({
+        files,
+        title:'Chat Wrapped',
+        text:'Meine Chat Wrapped Story 👀'
+      });
+    }catch(err){
+      // Nutzer hat den Dialog abgebrochen -> kein Fehler nötig
+    }
+  } else {
+    files.forEach(f=> downloadBlob(f, f.name));
+    const appName = target === 'instagram' ? 'Instagram' : 'WhatsApp';
+    const plural = files.length > 1 ? `Alle ${files.length} Bilder wurden` : 'Das Bild wurde';
+    showToast(`Dein Gerät/Browser unterstützt kein direktes Teilen. ${plural} gespeichert – lad ${files.length>1?'sie':'es'} manuell in ${appName} hoch.`);
+  }
+}
+
+async function handleShare(target, scope){
+  try{
+    if(scope === 'all'){
+      const files = await captureAllCards();
+      await shareFiles(files, target);
+    } else {
+      const el = document.getElementById(`card-${activeIndex}`);
+      const canvas = await html2canvas(el, {backgroundColor:null, scale:2, useCORS:true, allowTaint:false});
+      const blob = await new Promise(res=> canvas.toBlob(res, 'image/png'));
+      if(!blob){ showToast('Bild konnte nicht erstellt werden.'); return; }
+      const file = new File([blob], `chat-wrapped-${activeIndex+1}.png`, {type:'image/png'});
+      await shareFiles([file], target);
+    }
+  }catch(err){
+    showToast('Bild konnte nicht erstellt werden. Versuch es nochmal.');
+  }
+}
+</script>
+</body>
+</html>
